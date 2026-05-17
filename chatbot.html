@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIChatBot GKJW Probolinggo</title>
+    <style>
+        /* ============================================================
+           GLOBAL RESET & BASE STYLES
+        ============================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --color-primary:     #5C3D1E;   /* Coklat Jati Tua */
+            --color-secondary:   #8B5E3C;   /* Coklat Sogan */
+            --color-gold:        #C8972B;   /* Emas Batik */
+            --color-gold-light:  #E8C56D;   /* Emas Muda */
+            --color-cream:       #F5EDD6;   /* Krem Mori */
+            --color-cream-dark:  #E8D9B5;   /* Krem Tua */
+            --color-user-bubble: #DCF8C6;   /* Hijau Muda (ala WA) */
+            --color-bot-bubble:  #FFFFFF;   /* Putih */
+            --color-header-bg:   #3E2208;   /* Coklat Gelap Header */
+            --color-input-bg:    #F0E8D0;   /* Krem Input */
+            --color-text-dark:   #2C1810;   /* Teks Gelap */
+            --color-text-mid:    #5C3D1E;   /* Teks Sedang */
+            --color-text-light:  #8B7355;   /* Teks Terang */
+            --color-shadow:      rgba(92, 61, 30, 0.25);
+            --border-radius-bubble: 12px;
+            --font-main:         'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--color-cream-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-image:
+                radial-gradient(circle at 20% 50%, rgba(200, 151, 43, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(92, 61, 30, 0.08) 0%, transparent 50%);
+        }
+
+        /* ============================================================
+           APP CONTAINER - WhatsApp-like layout
+        ============================================================ */
+        #app-container {
+            width: 100%;
+            max-width: 480px;
+            height: 100vh;
+            max-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--color-cream);
+            box-shadow: 0 0 40px var(--color-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ============================================================
+           HEADER
+        ============================================================ */
+        #chat-header {
+            background: linear-gradient(135deg, var(--color-header-bg) 0%, var(--color-primary) 60%, var(--color-secondary) 100%);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+            z-index: 10;
+            position: relative;
+        }
+
+        /* Ornamen border bawah header - motif kawung */
+        #chat-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg,
+                var(--color-gold) 0%,
+                var(--color-gold-light) 25%,
+                var(--color-gold) 50%,
+                var(--color-gold-light) 75%,
+                var(--color-gold) 100%);
+        }
+
+        #header-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px solid var(--color-gold);
+            object-fit: cover;
+            flex-shrink: 0;
+            background-color: var(--color-cream);
+        }
+
+        #header-info {
+            flex: 1;
+        }
+
+        #header-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--color-cream);
+            letter-spacing: 0.3px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        #header-status {
+            font-size: 11px;
+            color: var(--color-gold-light);
+            margin-top: 1px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        #header-status::before {
+            content: '';
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            box-shadow: 0 0 4px rgba(76, 175, 80, 0.6);
+        }
+
+        #header-clear-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(200, 151, 43, 0.4);
+            color: var(--color-gold-light);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        #header-clear-btn:hover {
+            background: rgba(200, 151, 43, 0.2);
+            border-color: var(--color-gold);
+            color: var(--color-gold);
+        }
+
+        /* ============================================================
+           CHAT AREA - dengan Batik Background Pattern
+        ============================================================ */
+        #chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: relative;
+        }
+
+        /* Batik SVG Pattern sebagai background */
+        #chat-area::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0.06;
+            pointer-events: none;
+            z-index: 0;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cdefs%3E%3Cstyle%3E.b%7Bfill:none;stroke:%235C3D1E;stroke-width:1.2%7D%3C/style%3E%3C/defs%3E%3C!-- Kawung utama --%3E%3Ccircle class='b' cx='40' cy='40' r='16'/%3E%3Ccircle class='b' cx='40' cy='40' r='8'/%3E%3C!-- 4 Petal Kawung --%3E%3Cellipse class='b' cx='40' cy='24' rx='8' ry='14'/%3E%3Cellipse class='b' cx='40' cy='56' rx='8' ry='14'/%3E%3Cellipse class='b' cx='24' cy='40' rx='14' ry='8'/%3E%3Cellipse class='b' cx='56' cy='40' rx='14' ry='8'/%3E%3C!-- Sudut --%3E%3Ccircle class='b' cx='0' cy='0' r='8'/%3E%3Ccircle class='b' cx='80' cy='0' r='8'/%3E%3Ccircle class='b' cx='0' cy='80' r='8'/%3E%3Ccircle class='b' cx='80' cy='80' r='8'/%3E%3C!-- Titik tengah ornamen --%3E%3Ccircle fill='%235C3D1E' cx='40' cy='40' r='2'/%3E%3Ccircle fill='%235C3D1E' cx='40' cy='24' r='1.5'/%3E%3Ccircle fill='%235C3D1E' cx='40' cy='56' r='1.5'/%3E%3Ccircle fill='%235C3D1E' cx='24' cy='40' r='1.5'/%3E%3Ccircle fill='%235C3D1E' cx='56' cy='40' r='1.5'/%3E%3C!-- Garis diagonal ornamen --%3E%3Cline class='b' x1='28' y1='28' x2='52' y2='52' stroke-dasharray='2,4'/%3E%3Cline class='b' x1='52' y1='28' x2='28' y2='52' stroke-dasharray='2,4'/%3E%3C/svg%3E");
+            background-size: 80px 80px;
+            background-color: var(--color-cream);
+        }
+
+        /* Custom Scrollbar untuk chat-area */
+        #chat-area::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #chat-area::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #chat-area::-webkit-scrollbar-thumb {
+            background-color: var(--color-gold-light);
+            border-radius: 4px;
+        }
+
+        /* ============================================================
+           MESSAGE BUBBLES
+        ============================================================ */
+        .message-wrapper {
+            display: flex;
+            flex-direction: column;
+            max-width: 80%;
+            position: relative;
+            z-index: 1;
+            animation: bubbleFadeIn 0.3s ease-out;
+        }
+
+        @keyframes bubbleFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-wrapper.user {
+            align-self: flex-end;
+            align-items: flex-end;
+        }
+
+        .message-wrapper.bot {
+            align-self: flex-start;
+            align-items: flex-start;
+        }
+
+        .message-bubble {
+            padding: 8px 12px;
+            border-radius: var(--border-radius-bubble);
+            font-size: 13.5px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            position: relative;
+        }
+
+        /* User bubble - sudut kanan atas tajam */
+        .message-wrapper.user .message-bubble {
+            background-color: var(--color-user-bubble);
+            color: var(--color-text-dark);
+            border-top-right-radius: 3px;
+            border: 1px solid rgba(76, 175, 80, 0.2);
+        }
+
+        /* User bubble tail */
+        .message-wrapper.user .message-bubble::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: -7px;
+            width: 0;
+            height: 0;
+            border-left: 7px solid var(--color-user-bubble);
+            border-bottom: 7px solid transparent;
+        }
+
+        /* Bot bubble - sudut kiri atas tajam */
+        .message-wrapper.bot .message-bubble {
+            background-color: var(--color-bot-bubble);
+            color: var(--color-text-dark);
+            border-top-left-radius: 3px;
+            border: 1px solid rgba(92, 61, 30, 0.1);
+        }
+
+        /* Bot bubble tail */
+        .message-wrapper.bot .message-bubble::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -7px;
+            width: 0;
+            height: 0;
+            border-right: 7px solid var(--color-bot-bubble);
+            border-bottom: 7px solid transparent;
+        }
+
+        .message-time {
+            font-size: 10px;
+            color: var(--color-text-light);
+            margin-top: 3px;
+            padding: 0 4px;
+        }
+
+        /* Pesan "maaf" dari bot dengan style khusus */
+        .message-bubble.uncertain {
+            background-color: #FFF9E6;
+            border-color: rgba(200, 151, 43, 0.3);
+        }
+
+        /* ============================================================
+           TYPING INDICATOR
+        ============================================================ */
+        #typing-indicator {
+            display: none;
+            align-self: flex-start;
+            align-items: flex-start;
+            flex-direction: column;
+            max-width: 80%;
+            position: relative;
+            z-index: 1;
+        }
+
+        #typing-indicator.visible {
+            display: flex;
+        }
+
+        .typing-bubble {
+            background-color: var(--color-bot-bubble);
+            border: 1px solid rgba(92, 61, 30, 0.1);
+            border-radius: var(--border-radius-bubble);
+            border-top-left-radius: 3px;
+            padding: 10px 14px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 7px;
+            height: 7px;
+            background-color: var(--color-text-light);
+            border-radius: 50%;
+            animation: typingBounce 1.2s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingBounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+            30% { transform: translateY(-5px); opacity: 1; }
+        }
+
+        /* ============================================================
+           DATE SEPARATOR
+        ============================================================ */
+        .date-separator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 8px 0;
+            z-index: 1;
+            position: relative;
+        }
+
+        .date-separator span {
+            background-color: rgba(92, 61, 30, 0.12);
+            color: var(--color-text-mid);
+            font-size: 11px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+        }
+
+        /* ============================================================
+           WELCOME MESSAGE
+        ============================================================ */
+        .welcome-card {
+            background: linear-gradient(135deg, rgba(200, 151, 43, 0.1), rgba(92, 61, 30, 0.08));
+            border: 1px solid rgba(200, 151, 43, 0.25);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin: 8px 0;
+            text-align: center;
+            font-size: 12px;
+            color: var(--color-text-mid);
+            line-height: 1.6;
+            position: relative;
+            z-index: 1;
+        }
+
+        .welcome-card strong {
+            color: var(--color-primary);
+            font-size: 13px;
+        }
+
+        /* ============================================================
+           AUTOCOMPLETE DROPDOWN
+        ============================================================ */
+        #autocomplete-dropdown {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--color-cream-dark);
+            border-bottom: none;
+            border-radius: 12px 12px 0 0;
+            box-shadow: 0 -4px 16px var(--color-shadow);
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        #autocomplete-dropdown.visible {
+            display: block;
+        }
+
+        .autocomplete-header {
+            padding: 8px 14px 4px;
+            font-size: 10px;
+            color: var(--color-text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--color-cream-dark);
+            background: linear-gradient(135deg, rgba(200,151,43,0.06), rgba(92,61,30,0.04));
+        }
+
+        .autocomplete-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--color-text-dark);
+            border-bottom: 1px solid rgba(232, 217, 181, 0.5);
+            transition: background-color 0.15s ease;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-item:hover,
+        .autocomplete-item.selected {
+            background-color: rgba(200, 151, 43, 0.1);
+        }
+
+        .autocomplete-item::before {
+            content: '🔍';
+            font-size: 11px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .autocomplete-highlight {
+            background-color: rgba(200, 151, 43, 0.3);
+            border-radius: 2px;
+            font-weight: 600;
+        }
+
+        /* Scrollbar dropdown */
+        #autocomplete-dropdown::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        #autocomplete-dropdown::-webkit-scrollbar-thumb {
+            background-color: var(--color-gold-light);
+            border-radius: 3px;
+        }
+
+        /* ============================================================
+           INPUT AREA
+        ============================================================ */
+        #input-area {
+            background: linear-gradient(to top, var(--color-cream-dark), var(--color-cream));
+            padding: 10px 12px;
+            border-top: 1px solid rgba(92, 61, 30, 0.15);
+            flex-shrink: 0;
+            position: relative;
+            z-index: 50;
+        }
+
+        #input-wrapper {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            position: relative;
+        }
+
+        #input-box-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #user-input {
+            width: 100%;
+            background-color: white;
+            border: 1.5px solid var(--color-cream-dark);
+            border-radius: 22px;
+            padding: 10px 16px;
+            font-size: 14px;
+            color: var(--color-text-dark);
+            outline: none;
+            resize: none;
+            font-family: var(--font-main);
+            max-height: 120px;
+            overflow-y: auto;
+            line-height: 1.5;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        #user-input:focus {
+            border-color: var(--color-gold);
+            box-shadow: 0 0 0 3px rgba(200, 151, 43, 0.12);
+        }
+
+        #user-input::placeholder {
+            color: var(--color-text-light);
+            font-style: italic;
+        }
+
+        #send-btn {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--color-gold), var(--color-secondary));
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(200, 151, 43, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        #send-btn:hover {
+            background: linear-gradient(135deg, var(--color-gold-light), var(--color-gold));
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(200, 151, 43, 0.5);
+        }
+
+        #send-btn:active {
+            transform: scale(0.96);
+        }
+
+        #send-btn svg {
+            fill: white;
+            width: 20px;
+            height: 20px;
+            margin-left: 2px;
+        }
+
+        /* ============================================================
+           MODAL KONFIRMASI HAPUS CHAT
+        ============================================================ */
+        #modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #modal-overlay.visible {
+            display: flex;
+        }
+
+        #modal-box {
+            background: white;
+            border-radius: 14px;
+            padding: 24px 22px;
+            max-width: 300px;
+            width: 90%;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            text-align: center;
+        }
+
+        #modal-box h3 {
+            color: var(--color-primary);
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        #modal-box p {
+            font-size: 13px;
+            color: var(--color-text-mid);
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .modal-btn {
+            padding: 9px 22px;
+            border-radius: 8px;
+            border: none;
+            font-size: 13px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .modal-btn.cancel {
+            background: var(--color-cream-dark);
+            color: var(--color-text-mid);
+        }
+
+        .modal-btn.cancel:hover {
+            background: var(--color-cream);
+            color: var(--color-primary);
+        }
+
+        .modal-btn.confirm {
+            background: linear-gradient(135deg, #d32f2f, #b71c1c);
+            color: white;
+        }
+
+        .modal-btn.confirm:hover {
+            background: linear-gradient(135deg, #c62828, #a31515);
+            transform: scale(1.03);
+        }
+
+        /* ============================================================
+           RESPONSIVE - Tablet & Desktop
+        ============================================================ */
+        @media (min-width: 500px) {
+            body {
+                padding: 0;
+            }
+
+            #app-container {
+                height: 95vh;
+                max-height: 900px;
+                border-radius: 16px;
+                overflow: hidden;
+            }
+
+            #chat-area::before {
+                position: absolute;
+                border-radius: inherit;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ================================================================
+     MODAL KONFIRMASI HAPUS
+================================================================ -->
+<div id="modal-overlay">
+    <div id="modal-box">
+        <h3>🗑️ Hapus Riwayat Chat?</h3>
+        <p>Semua riwayat percakapan akan dihapus secara permanen. Tindakan ini tidak bisa dibatalkan.</p>
+        <div class="modal-buttons">
+            <button class="modal-btn cancel" onclick="closeModal()">Batal</button>
+            <button class="modal-btn confirm" onclick="clearChatConfirmed()">Hapus</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================================
+     MAIN APP CONTAINER
+================================================================ -->
+<div id="app-container">
+
+    <!-- HEADER -->
+    <div id="chat-header">
+        <img
+            id="header-avatar"
+            src="https://whatitumysite.github.io/kpt_gkjw/Logo%20GKJW.png"
+            alt="Logo GKJW"
+            onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 44 44\'%3E%3Ccircle cx=\'22\' cy=\'22\' r=\'22\' fill=\'%23C8972B\'/%3E%3Ctext x=\'50%25\' y=\'55%25\' text-anchor=\'middle\' dominant-baseline=\'middle\' font-size=\'18\' fill=\'white\'%3E✝%3C/text%3E%3C/svg%3E'"
+        />
+        <div id="header-info">
+            <div id="header-name">AIChatBot GKJW Probolinggo</div>
+            <div id="header-status">Online</div>
+        </div>
+        <button id="header-clear-btn" onclick="openModal()">🗑️ Hapus Chat</button>
+    </div>
+
+    <!-- CHAT AREA -->
+    <div id="chat-area">
+        <!-- Pesan-pesan akan dirender di sini oleh JavaScript -->
+        <div id="typing-indicator">
+            <div class="typing-bubble">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- INPUT AREA -->
+    <div id="input-area">
+        <div id="input-wrapper">
+            <div id="input-box-container">
+                <!-- AUTOCOMPLETE DROPDOWN -->
+                <div id="autocomplete-dropdown">
+                    <div class="autocomplete-header">💡 Rekomendasi Pertanyaan</div>
+                    <!-- Item rekomendasi akan dirender di sini -->
+                </div>
+
+                <textarea
+                    id="user-input"
+                    rows="1"
+                    placeholder="Ketik pertanyaan Anda di sini..."
+                    autocomplete="off"
+                    spellcheck="false"
+                ></textarea>
+            </div>
+            <button id="send-btn" onclick="handleSend()" title="Kirim Pesan">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+</div><!-- end #app-container -->
+
+
+<script>
+/* ================================================================
+   ██████╗  █████╗      ██████╗  █████╗ ████████╗ █████╗ ██████╗  █████╗ ███████╗███████╗
+   ██╔═══██╗██╔══██╗    ██╔══██╗██╔══██╗╚══██╔══╝██╔══██╗██╔══██╗██╔══██╗██╔════╝██╔════╝
+   ██║   ██║███████║    ██║  ██║███████║   ██║   ███████║██████╔╝███████║███████╗█████╗
+   ██║▄▄ ██║██╔══██║    ██║  ██║██╔══██║   ██║   ██╔══██║██╔══██╗██╔══██║╚════██║██╔══╝
+   ╚██████╔╝██║  ██║    ██████╔╝██║  ██║   ██║   ██║  ██║██████╔╝██║  ██║███████║███████╗
+    ╚══▀▀═╝ ╚═╝  ╚═╝    ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝
+   AIChatBot GKJW Probolinggo - by Expert FE Dev
+================================================================ */
+
+/* ================================================================
+   ╔══════════════════════════════════════════════════════════════╗
+   ║              📚 DATABASE PERTANYAAN & JAWABAN               ║
+   ║                                                              ║
+   ║  HOW TO EDIT / ADD:                                          ║
+   ║  Tambahkan objek baru di dalam array qaDatabase di bawah.    ║
+   ║  Setiap objek memiliki dua properti WAJIB:                   ║
+   ║    - q : String berisi PERTANYAAN (bisa lebih dari 1         ║
+   ║            menggunakan array, lihat contoh)                  ║
+   ║    - a : String berisi JAWABAN dari bot                      ║
+   ║                                                              ║
+   ║  CONTOH FORMAT:                                              ║
+   ║  {                                                           ║
+   ║    q: "Pertanyaan utama di sini?",                           ║
+   ║    a: "Jawaban lengkap di sini."                             ║
+   ║  },                                                          ║
+   ║                                                              ║
+   ║  TIPS: Gunakan kata kunci yang natural agar fuzzy match      ║
+   ║  bekerja lebih baik.                                         ║
+   ╚══════════════════════════════════════════════════════════════╝ */
+
+const qaDatabase = [
+
+    /* ─────────────────────────────────────────────────────────────
+       KATEGORI 1: STRUKTUR & SEJARAH ORGANISASI GKJW PROBOLINGGO
+    ───────────────────────────────────────────────────────────── */
+    {
+        q: "Secara struktur sinodal, GKJW Jemaat Probolinggo tergabung ke dalam lingkup Majelis Daerah (MD) wilayah mana?",
+        a: "GKJW Jemaat Probolinggo masuk ke dalam wilayah pelayanan Majelis Daerah (MD) Malang III Timur."
+    },
+    {
+        q: "Peristiwa kelam apa yang tercatat dalam sejarah penggembalaan GKJW Probolinggo pada masa pendudukan militer Jepang di tahun 1944–1945?",
+        a: "Terjadi ujian berat bagi jemaat di mana pelayan firman yang bertugas saat itu, yakni Pdt. R. Noegroho, ditangkap oleh pihak tentara Jepang."
+    },
+    {
+        q: "Siapakah Pendeta yang dilantik secara resmi untuk menggembalakan GKJW Jemaat Probolinggo pada 25 Mei 2025?",
+        a: "Pdt. Argo Daniel Satwiko. Ia dilantik oleh perwakilan Pelayan Harian Majelis Agung (PHMA) GKJW, yaitu Pdt. Widi Nugroho."
+    },
+    {
+        q: "Berapa rincian spesifik luas area teritorial pelayanan GKJW Probolinggo yang berada di wilayah Kabupaten Probolinggo (di luar area Kota)?",
+        a: "Secara demografis teritorial, cakupan di Kabupaten Probolinggo melingkupi 18 desa di 9 kecamatan, dengan luas wilayah pelayanan sekitar 1.696 kilometer persegi."
+    },
+    {
+        q: "Paduan suara (PS) dari kelompok kategorial apa saja yang mengambil bagian melayani dalam pelantikan Pdt. Argo Daniel Satwiko pada tahun 2025?",
+        a: "Paduan Suara Yerikho, Paduan Suara Adiyuswa (yang menyanyikan lagu khusus \"Timbalan Pandita\"), dan Paduan Suara KPAR (Komisi Pembinaan Anak dan Remaja)."
+    },
+    {
+        q: "Bagaimana sistem peribadahan dan pelayanan GKJW Probolinggo dikelola pada masa transisi tahun 1964 hingga 1965 setelah masa bakti Pdt. Prawiro Akas?",
+        a: "Pada masa transisi tersebut, operasional gereja dan pelayanan dilayani secara mandiri oleh Majelis Jemaat itu sendiri, sebelum kemudian dilanjutkan oleh Bpk. Widayat Mistro yang saat itu masih berstatus Vikaris (calon pendeta)."
+    },
+
+    /* ─────────────────────────────────────────────────────────────
+       KATEGORI 2: ADMINISTRASI & KERJA SAMA PEMERINTAH
+    ───────────────────────────────────────────────────────────── */
+    {
+        q: "Terkait tertib administrasi, GKJW Jemaat Probolinggo melakukan penandatanganan kerja sama spesifik dengan institusi pemerintah daerah pada Juli 2025 dalam bidang apa?",
+        a: "Di bidang kearsipan. Kolaborasi ini dilakukan untuk memperkuat tata kelola manajemen arsip dokumen gereja serta pelestarian sejarah jemaat lokal bersama pemerintah."
+    },
+    {
+        q: "Siapakah tokoh publik dari Pemkot Probolinggo yang turut hadir membuka kegiatan Bazar UMKM Lintas Iman di halaman GKJW Probolinggo pada 4 Oktober 2025?",
+        a: "Ketua Tim Penggerak PKK (TP PKK) Kota Probolinggo, Ibu Evariani Aminuddin."
+    },
+
+    /* ─────────────────────────────────────────────────────────────
+       KATEGORI 3: EVENT & KEGIATAN JEMAAT
+    ───────────────────────────────────────────────────────────── */
+    {
+        q: "Acara tahunan apa yang diselenggarakan GKJW Probolinggo untuk turut memperingati hari jadi kotanya, seperti yang dilaksanakan pada awal September 2025?",
+        a: "GKJW Probolinggo menggelar event \"Ibadah Syukur Hari Jadi Kota Probolinggo\". Acara ini melibatkan jemaat untuk mendoakan kemajuan kota, mendukung program pemerintah daerah (seperti Probolinggo Bersolek), dan diakhiri dengan pemotongan tumpeng serta makan bersama."
+    },
+    {
+        q: "Event perayaan Paskah gabungan atau pembinaan pemuda seringkali dikemas di luar ruangan. Apa istilah untuk kegiatan peribadahan outdoor ini?",
+        a: "Ibadah Padang. Kegiatan ini biasanya dilaksanakan di alam terbuka (seperti villa atau taman) dan diselingi dengan berbagai lomba untuk memupuk kebersamaan dan sukacita lintas usia."
+    },
+    {
+        q: "Acara pemberdayaan ekonomi apa yang digelar di halaman GKJW Probolinggo yang melibatkan warga sekitar?",
+        a: "Acara Bazar UMKM Lintas Iman. Event ini menjadi sarana memasarkan produk lokal jemaat dan masyarakat umum, sekaligus menjadi ajang merajut kerukunan dan toleransi antarumat beragama di Kota Probolinggo."
+    },
+    {
+        q: "Event penting apa terkait pelestarian sejarah yang diselenggarakan GKJW Probolinggo bersama pemerintah daerah pada Juli 2025?",
+        a: "Event penandatanganan kesepakatan kerja sama di bidang kearsipan bersama Diperpusip (Dinas Perpustakaan dan Kearsipan). Acara ini bertujuan menyelamatkan dan mendokumentasikan arsip sejarah perjalanan gereja agar menjadi memori kolektif yang terawat."
+    },
+    {
+        q: "Event kesehatan (diakonia) apa yang paling sering masuk dalam kalender program rutin gereja untuk membantu sesama?",
+        a: "Aksi Sosial Donor Darah. Event ini biasanya diselenggarakan secara berkala dengan menggandeng Palang Merah Indonesia (PMI) setempat dan terbuka bagi partisipasi jemaat yang memenuhi syarat kesehatan."
+    },
+    {
+        q: "Event tahunan apa yang dikhususkan untuk pembinaan rohani dan karakter bagi generasi muda dan remaja di GKJW Probolinggo?",
+        a: "Youthcamp atau Retret Pemuda dan Remaja. Acara ini merupakan ajang konsolidasi pemuda gereja yang diisi dengan pembinaan spiritualitas, dinamika kelompok, dan permainan kekompakan."
+    },
+    {
+        q: "Selain kaum muda, event spesifik apa yang secara berkala digelar khusus untuk merawat persekutuan golongan usia lanjut?",
+        a: "Ibadah dan Persekutuan Adiyuswa (Lansia). Event ini dirancang khusus untuk warga jemaat lanjut usia, sering kali diselingi dengan penampilan Paduan Suara Adiyuswa, ramah tamah, dan seminar kesehatan ringan."
+    },
+    {
+        q: "Event kebersamaan apa yang secara rutin melibatkan partisipasi gotong royong seluruh jemaat demi kenyamanan fasilitas ibadah?",
+        a: "Kerja Bakti Jemaat. Kegiatan ini digerakkan secara masal oleh warga jemaat dari berbagai kelompok usia untuk membersihkan lingkungan fisik gereja, menata ruang ibadah, dan merawat fasilitas pendukung sebelum perayaan hari-hari besar gerejawi tiba."
+    },
+
+    /* ─────────────────────────────────────────────────────────────
+       ✏️  TAMBAHKAN PERTANYAAN BARU DI BAWAH BARIS INI
+       Format: { q: "pertanyaan?", a: "jawaban." },
+    ───────────────────────────────────────────────────────────── */
+
+]; // ← JANGAN HAPUS TANDA INI (akhir dari qaDatabase)
+
+
+/* ================================================================
+   KONFIGURASI APLIKASI
+================================================================ */
+const APP_CONFIG = {
+    STORAGE_KEY:       'gkjw_chatbot_history_v2',   // Key localStorage
+    BOT_REPLY_DELAY:   800,                           // Delay balasan bot (ms)
+    MIN_MATCH_SCORE:   1,                             // Skor minimum agar dianggap match
+    MAX_AUTOCOMPLETE:  6,                             // Maks item autocomplete
+    BOT_NAME:          'AIChatBot GKJW',
+    UNCERTAIN_PREFIX:  '🙏 Maaf, saya kurang yakin dengan jawaban ini. Mungkin maksud Anda:\n\n',
+    UNCERTAIN_SUFFIX:  '\n\n_(Maaf jika ada kesalahan jawaban. Silakan coba pertanyaan lain.)_',
+    WELCOME_MESSAGE:   'Sugeng rawuh! 🙏\nSaya adalah <strong>AIChatBot GKJW Probolinggo</strong>. Silakan ajukan pertanyaan Anda seputar GKJW Probolinggo. Ketik di bawah untuk memulai percakapan.'
+};
+
+
+/* ================================================================
+   STATE APLIKASI
+================================================================ */
+let chatHistory   = [];   // Array penyimpan semua pesan [{role, text, time, uncertain}]
+let selectedIndex = -1;   // Index item autocomplete yang dipilih keyboard
+
+
+/* ================================================================
+   UTILITAS
+================================================================ */
+
+/** Mendapatkan waktu sekarang dalam format HH:MM */
+function getCurrentTime() {
+    const now = new Date();
+    return now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+}
+
+/** Mendapatkan tanggal dalam format lokal Indonesia */
+function getDateLabel(dateStr) {
+    const today     = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const date = new Date(dateStr);
+    if (date.toDateString() === today.toDateString())     return 'Hari ini';
+    if (date.toDateString() === yesterday.toDateString()) return 'Kemarin';
+    return date.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+/** Sanitize HTML untuk keamanan */
+function escapeHtml(text) {
+    const map = { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;' };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+/** Render markdown sederhana: **bold**, _italic_, \n → <br> */
+function renderMarkdown(text) {
+    return escapeHtml(text)
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/_(.*?)_/g, '<em>$1</em>')
+        .replace(/\n/g, '<br>');
+}
+
+/** Normalisasi teks untuk pencarian: lowercase, hapus tanda baca */
+function normalizeText(text) {
+    return text
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+
+/* ================================================================
+   ALGORITMA FUZZY MATCH
+   Menghitung skor kecocokan antara input user dan pertanyaan di DB
+   Skor = jumlah kata kunci yang tumpang tindih (overlap)
+   Kata pendek (< 3 huruf) diabaikan untuk mengurangi noise
+================================================================ */
+function calculateMatchScore(userInput, questionText) {
+    const IGNORE_WORDS = new Set([
+        'yang','dan','di','ke','dari','untuk','dengan','ini','itu','pada',
+        'ada','atau','juga','sudah','akan','bisa','lebih','apa','siapa',
+        'kapan','dimana','bagaimana','berapa','adalah','dalam','oleh',
+        'ya','yg','nya','pun','saja','lah','kah','pun'
+    ]);
+
+    const userWords = normalizeText(userInput)
+        .split(' ')
+        .filter(w => w.length >= 3 && !IGNORE_WORDS.has(w));
+
+    const qWords = normalizeText(questionText)
+        .split(' ')
+        .filter(w => w.length >= 3 && !IGNORE_WORDS.has(w));
+
+    if (userWords.length === 0) return 0;
+
+    let score = 0;
+    userWords.forEach(uWord => {
+        qWords.forEach(qWord => {
+            // Exact match
+            if (uWord === qWord) {
+                score += 2; // Bobot lebih tinggi untuk exact match
+            }
+            // Partial match (substring)
+            else if (qWord.includes(uWord) || uWord.includes(qWord)) {
+                score += 1;
+            }
+        });
+    });
+
+    // Normalisasi: bagi dengan jumlah kata user agar fair
+    return score / Math.max(userWords.length, 1);
+}
+
+/** Cari jawaban terbaik dari database berdasarkan input user */
+function findBestAnswer(userInput) {
+    let bestScore   = 0;
+    let bestAnswer  = null;
+    let bestQuestion = null;
+
+    qaDatabase.forEach(item => {
+        const score = calculateMatchScore(userInput, item.q);
+        if (score > bestScore) {
+            bestScore    = score;
+            bestAnswer   = item.a;
+            bestQuestion = item.q;
+        }
+    });
+
+    return {
+        score:    bestScore,
+        answer:   bestAnswer,
+        question: bestQuestion,
+        uncertain: bestScore < APP_CONFIG.MIN_MATCH_SCORE
+    };
+}
+
+
+/* ================================================================
+   AUTOCOMPLETE
+================================================================ */
+const dropdown   = document.getElementById('autocomplete-dropdown');
+const userInput  = document.getElementById('user-input');
+
+/** Filter dan tampilkan rekomendasi berdasarkan input */
+function updateAutocomplete(inputText) {
+    const query = inputText.trim().toLowerCase();
+
+    if (query.length < 2) {
+        hideAutocomplete();
+        return;
+    }
+
+    // Filter pertanyaan yang mengandung kata dari input
+    const queryWords = query.split(/\s+/).filter(w => w.length >= 2);
+    const matches = qaDatabase.filter(item => {
+        const qNorm = item.q.toLowerCase();
+        return queryWords.some(word => qNorm.includes(word));
+    });
+
+    if (matches.length === 0) {
+        hideAutocomplete();
+        return;
+    }
+
+    // Tampilkan maks N item
+    const limited = matches.slice(0, APP_CONFIG.MAX_AUTOCOMPLETE);
+    renderAutocomplete(limited, query);
+    selectedIndex = -1;
+}
+
+/** Render item dropdown dengan highlight teks yang cocok */
+function renderAutocomplete(items, query) {
+    // Bersihkan item lama (kecuali header)
+    const existingItems = dropdown.querySelectorAll('.autocomplete-item');
+    existingItems.forEach(el => el.remove());
+
+    items.forEach((item, idx) => {
+        const div = document.createElement('div');
+        div.className = 'autocomplete-item';
+        div.setAttribute('data-index', idx);
+
+        // Highlight kata yang cocok
+        let displayText = escapeHtml(item.q);
+        query.split(/\s+/).filter(w => w.length >= 2).forEach(word => {
+            const regex = new RegExp(`(${escapeHtml(word)})`, 'gi');
+            displayText = displayText.replace(regex, '<span class="autocomplete-highlight">$1</span>');
+        });
+
+        div.innerHTML = displayText;
+        div.addEventListener('mousedown', (e) => {
+            e.preventDefault(); // Cegah blur pada textarea
+            selectAutocompleteItem(item.q);
+        });
+
+        dropdown.appendChild(div);
+    });
+
+    dropdown.classList.add('visible');
+}
+
+/** User memilih item autocomplete - langsung kirim sebagai pesan */
+function selectAutocompleteItem(questionText) {
+    userInput.value = '';
+    autoResizeTextarea();
+    hideAutocomplete();
+    processUserMessage(questionText);
+}
+
+function hideAutocomplete() {
+    dropdown.classList.remove('visible');
+    selectedIndex = -1;
+}
+
+/** Navigasi keyboard untuk dropdown */
+function handleAutocompleteKeyboard(e) {
+    const items = dropdown.querySelectorAll('.autocomplete-item');
+    if (!dropdown.classList.contains('visible') || items.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIndex = Math.max(selectedIndex - 1, -1);
+    } else if (e.key === 'Enter' && selectedIndex >= 0) {
+        e.preventDefault();
+        const selectedItem = qaDatabase.filter(item => {
+            const query = userInput.value.trim().toLowerCase();
+            const qWords = query.split(/\s+/).filter(w => w.length >= 2);
+            return qWords.some(w => item.q.toLowerCase().includes(w));
+        })[selectedIndex];
+
+        if (selectedItem) {
+            selectAutocompleteItem(selectedItem.q);
+        }
+        return;
+    } else {
+        return;
+    }
+
+    // Update visual selection
+    items.forEach((item, i) => {
+        item.classList.toggle('selected', i === selectedIndex);
+    });
+}
+
+
+/* ================================================================
+   RENDER CHAT
+================================================================ */
+const chatArea = document.getElementById('chat-area');
+const typingIndicator = document.getElementById('typing-indicator');
+
+/** Render satu bubble pesan ke DOM */
+function renderMessage(role, text, time, uncertain = false) {
+    const wrapper = document.createElement('div');
+    wrapper.className = `message-wrapper ${role}`;
+
+    const bubble = document.createElement('div');
+    bubble.className = `message-bubble${uncertain ? ' uncertain' : ''}`;
+    bubble.innerHTML = renderMarkdown(text);
+
+    const timeEl = document.createElement('div');
+    timeEl.className = 'message-time';
+
+    if (role === 'user') {
+        timeEl.innerHTML = `${time} ✓✓`;
+    } else {
+        timeEl.innerHTML = `${APP_CONFIG.BOT_NAME} · ${time}`;
+    }
+
+    wrapper.appendChild(bubble);
+    wrapper.appendChild(timeEl);
+
+    // Insert sebelum typing indicator
+    chatArea.insertBefore(wrapper, typingIndicator);
+    scrollToBottom();
+}
+
+/** Render pemisah tanggal */
+function renderDateSeparator(dateLabel) {
+    const sep = document.createElement('div');
+    sep.className = 'date-separator';
+    sep.innerHTML = `<span>${dateLabel}</span>`;
+    chatArea.insertBefore(sep, typingIndicator);
+}
+
+/** Render welcome card (hanya saat chat kosong) */
+function renderWelcomeCard() {
+    const card = document.createElement('div');
+    card.className = 'welcome-card';
+    card.id = 'welcome-card';
+    card.innerHTML = `
+        🙏 <strong>Sugeng Rawuh!</strong><br>
+        ${APP_CONFIG.WELCOME_MESSAGE}
+    `;
+    chatArea.insertBefore(card, typingIndicator);
+}
+
+/** Scroll chat ke bawah */
+function scrollToBottom(smooth = true) {
+    setTimeout(() => {
+        chatArea.scrollTo({
+            top: chatArea.scrollHeight,
+            behavior: smooth ? 'smooth' : 'instant'
+        });
+    }, 50);
+}
+
+/** Tampilkan animasi typing bot */
+function showTyping() {
+    typingIndicator.classList.add('visible');
+    scrollToBottom();
+}
+
+/** Sembunyikan animasi typing bot */
+function hideTyping() {
+    typingIndicator.classList.remove('visible');
+}
+
+/** Muat ulang semua riwayat chat dari state ke DOM */
+function renderAllHistory() {
+    // Hapus semua child kecuali typing indicator
+    const children = Array.from(chatArea.children);
+    children.forEach(child => {
+        if (child.id !== 'typing-indicator') child.remove();
+    });
+
+    if (chatHistory.length === 0) {
+        renderWelcomeCard();
+        return;
+    }
+
+    let lastDateLabel = null;
+
+    chatHistory.forEach(msg => {
+        const dateLabel = getDateLabel(msg.date || new Date().toISOString());
+
+        if (dateLabel !== lastDateLabel) {
+            renderDateSeparator(dateLabel);
+            lastDateLabel = dateLabel;
+        }
+
+        renderMessage(msg.role, msg.text, msg.time, msg.uncertain || false);
+    });
+
+    scrollToBottom(false);
+}
+
+
+/* ================================================================
+   LOGIKA UTAMA - PROSES PESAN
+================================================================ */
+
+/** Tambah pesan ke state dan localStorage */
+function addToHistory(role, text, time, uncertain = false) {
+    const msg = {
+        role,
+        text,
+        time,
+        date: new Date().toISOString(),
+        uncertain
+    };
+    chatHistory.push(msg);
+    saveHistory();
+    return msg;
+}
+
+/** Proses pesan dari user (baik manual maupun dari autocomplete) */
+function processUserMessage(text) {
+    if (!text.trim()) return;
+
+    // Hapus welcome card jika masih ada
+    const welcomeCard = document.getElementById('welcome-card');
+    if (welcomeCard) welcomeCard.remove();
+
+    const time = getCurrentTime();
+
+    // Tampilkan pesan user
+    const dateLabel = getDateLabel(new Date().toISOString());
+    const lastDate  = chatHistory.length > 0
+        ? getDateLabel(chatHistory[chatHistory.length - 1].date || new Date().toISOString())
+        : null;
+
+    if (dateLabel !== lastDate) {
+        renderDateSeparator(dateLabel);
+    }
+
+    addToHistory('user', text, time);
+    renderMessage('user', text, time);
+
+    // Proses jawaban bot
+    showTyping();
+
+    setTimeout(() => {
+        hideTyping();
+
+        const result   = findBestAnswer(text);
+        const botTime  = getCurrentTime();
+        let   botText  = '';
+        let   uncertain = false;
+
+        if (result.score >= APP_CONFIG.MIN_MATCH_SCORE) {
+            // Jawaban ditemukan dengan skor cukup
+            botText   = result.answer;
+            uncertain = false;
+        } else if (result.answer) {
+            // Skor rendah - jawab tapi dengan pesan "maaf"
+            botText   = APP_CONFIG.UNCERTAIN_PREFIX + result.answer + APP_CONFIG.UNCERTAIN_SUFFIX;
+            uncertain = true;
+        } else {
+            // Tidak ada data sama sekali (database kosong?)
+            botText   = '🙏 Maaf, saya belum memiliki informasi tentang hal tersebut. Silakan coba pertanyaan lain seputar GKJW Probolinggo.';
+            uncertain = true;
+        }
+
+        addToHistory('bot', botText, botTime, uncertain);
+        renderMessage('bot', botText, botTime, uncertain);
+
+    }, APP_CONFIG.BOT_REPLY_DELAY);
+}
+
+/** Handler tombol kirim */
+function handleSend() {
+    const text = userInput.value.trim();
+    if (!text) return;
+
+    userInput.value = '';
+    autoResizeTextarea();
+    hideAutocomplete();
+    processUserMessage(text);
+}
+
+
+/* ================================================================
+   AUTO-RESIZE TEXTAREA
+================================================================ */
+function autoResizeTextarea() {
+    userInput.style.height = 'auto';
+    userInput.style.height = Math.min(userInput.scrollHeight, 120) + 'px';
+}
+
+
+/* ================================================================
+   LOCAL STORAGE
+================================================================ */
+
+/** Simpan riwayat chat ke localStorage */
+function saveHistory() {
+    try {
+        localStorage.setItem(APP_CONFIG.STORAGE_KEY, JSON.stringify(chatHistory));
+    } catch (e) {
+        console.warn('LocalStorage penuh atau tidak tersedia:', e);
+    }
+}
+
+/** Muat riwayat dari localStorage */
+function loadHistory() {
+    try {
+        const raw = localStorage.getItem(APP_CONFIG.STORAGE_KEY);
+        if (raw) {
+            chatHistory = JSON.parse(raw);
+        }
+    } catch (e) {
+        console.warn('Gagal memuat riwayat chat:', e);
+        chatHistory = [];
+    }
+}
+
+
+/* ================================================================
+   MODAL HAPUS CHAT
+================================================================ */
+function openModal() {
+    document.getElementById('modal-overlay').classList.add('visible');
+}
+
+function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('visible');
+}
+
+function clearChatConfirmed() {
+    chatHistory = [];
+    localStorage.removeItem(APP_CONFIG.STORAGE_KEY);
+    closeModal();
+    renderAllHistory(); // Akan render welcome card karena history kosong
+}
+
+// Tutup modal jika klik di luar modal-box
+document.getElementById('modal-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+
+
+/* ================================================================
+   EVENT LISTENERS
+================================================================ */
+
+// Input: autocomplete + auto-resize
+userInput.addEventListener('input', function() {
+    autoResizeTextarea();
+    updateAutocomplete(this.value);
+});
+
+// Keyboard: Enter kirim, navigasi dropdown
+userInput.addEventListener('keydown', function(e) {
+    // Jika dropdown visible, handle navigasi keyboard
+    if (dropdown.classList.contains('visible')) {
+        handleAutocompleteKeyboard(e);
+        if (e.key === 'Escape') {
+            hideAutocomplete();
+            return;
+        }
+    }
+
+    // Enter (tanpa Shift) = kirim pesan
+    if (e.key === 'Enter' && !e.shiftKey) {
+        // Jika tidak ada item terpilih di dropdown
+        if (selectedIndex < 0) {
+            e.preventDefault();
+            handleSend();
+        }
+    }
+});
+
+// Blur: sembunyikan autocomplete setelah delay kecil
+userInput.addEventListener('blur', function() {
+    setTimeout(hideAutocomplete, 200);
+});
+
+// Focus: tampilkan kembali autocomplete jika ada teks
+userInput.addEventListener('focus', function() {
+    if (this.value.trim().length >= 2) {
+        updateAutocomplete(this.value);
+    }
+});
+
+
+/* ================================================================
+   INISIALISASI APLIKASI
+================================================================ */
+(function init() {
+    loadHistory();
+    renderAllHistory();
+
+    // Pastikan textarea mulai dengan ukuran minimal
+    autoResizeTextarea();
+
+    console.log(
+        '%c🙏 AIChatBot GKJW Probolinggo',
+        'color: #C8972B; font-size: 16px; font-weight: bold;'
+    );
+    console.log(
+        `%c${qaDatabase.length} pertanyaan dimuat dari database.`,
+        'color: #5C3D1E; font-size: 12px;'
+    );
+})();
+
+</script>
+</body>
+  </html>
